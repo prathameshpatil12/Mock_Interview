@@ -1,0 +1,35 @@
+# MockAI · Integrated Backend — Module 01 + 02 + 03 + 04
+# pip install -r requirements.txt
+
+# ── Web framework ─────────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+
+# ── Module 01 — Whisper STT ───────────────────────────────────────────────
+setuptools>=68.0.0
+openai-whisper==20231117
+
+# ── Module 02 — Audio Analysis ────────────────────────────────────────────
+librosa==0.10.1
+soundfile==0.12.1
+numpy==1.26.4
+scipy==1.13.0
+
+# ── Module 03 — NLP ───────────────────────────────────────────────────────
+sentence-transformers==2.6.1
+scikit-learn==1.4.2
+spacy==3.7.4
+nltk==3.8.1
+
+# ── Module 04 — Facial Analysis ───────────────────────────────────────────
+# fer = PyTorch-based emotion detection (replaces DeepFace — no TF conflicts)
+fer==22.5.1
+opencv-python==4.9.0.80
+mediapipe==0.10.14
+
+# After install, run:
+#   python -m spacy download en_core_web_sm
+
+# ── PyTorch GPU (install BEFORE this file) ────────────────────────────────
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
