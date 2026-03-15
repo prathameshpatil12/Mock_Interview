@@ -1299,13 +1299,18 @@ function FinalReport({agentReport,combinedResults,role,difficulty,onRestart}){
 }
 /* ════════════ MOBILE INTERVIEW LAYOUT ══════════════════════════════════ */
 function MobileInterviewLayout({
-  isMobile,isRec,isProc,isDone,answered,total,qNumber,
+  isMobile,status,isRec,isProc,isDone,answered,total,qNumber,
   currentQ,currentCtx,combinedResults,latestResult,
   loadStep,recTime,frames,camOk,liveEmo,blob,err,
   videoRef,canvasRef,analyser,startRec,stopRec,analyze,generateReport,
   setStatus,setBlob,setErr,setRecTime,setLoad,agentConfig,fullReset,backend
 }){
   const [mobileTab,setMobileTab]=useState("record"); // record | results | progress
+
+  // Auto-switch to results tab when a new analysis completes
+  useEffect(()=>{
+    if(latestResult&&isDone) setMobileTab("results");
+  },[latestResult]);
 
   return(
     <div style={{position:"relative",zIndex:1,flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
@@ -1329,101 +1334,172 @@ function MobileInterviewLayout({
 
       {/* RECORD TAB */}
       {mobileTab==="record"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-        {/* Question card */}
-        <div style={{padding:"12px 14px",background:P.s2,borderBottom:`1px solid ${P.b1}`,flexShrink:0}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-            <div style={{fontSize:8,color:P.v4,letterSpacing:2,textTransform:"uppercase",fontFamily:"'DM Mono',monospace"}}>
-              Question {qNumber} of {total}
+
+        {/* Question card — compact */}
+        <div style={{padding:"10px 14px",background:P.s2,borderBottom:`1px solid ${P.b1}`,flexShrink:0}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{background:P.v2,borderRadius:5,padding:"2px 8px",fontSize:9,fontWeight:800,
+                color:"#fff",fontFamily:"'DM Mono',monospace"}}>Q{qNumber}</div>
+              <div style={{fontSize:8,color:P.muted,fontFamily:"'DM Mono',monospace"}}>of {total}</div>
             </div>
-            <div style={{background:P.v2+"20",border:`1px solid ${P.v2}40`,borderRadius:6,
-              padding:"2px 8px",fontSize:9,color:P.v4,fontFamily:"'DM Mono',monospace"}}>
-              {agentConfig?.difficulty}
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <div style={{background:P.v2+"20",border:`1px solid ${P.v2}40`,borderRadius:5,
+                padding:"2px 8px",fontSize:9,color:P.v4,fontFamily:"'DM Mono',monospace",textTransform:"capitalize"}}>
+                {agentConfig?.difficulty}
+              </div>
+              {/* Compact progress dots */}
+              <div style={{display:"flex",gap:3}}>
+                {Array.from({length:total}).map((_,i)=>(
+                  <div key={i} style={{width:i<answered?14:i===answered?10:6,height:6,borderRadius:3,
+                    background:i<answered?P.green:i===answered?P.v4:P.b2,transition:"all .3s"}}/>
+                ))}
+              </div>
             </div>
           </div>
-          <div style={{fontSize:13,fontWeight:700,color:P.white,lineHeight:1.5,marginBottom:currentCtx?6:0}}>{currentQ}</div>
-          {currentCtx&&<div style={{fontSize:10,color:P.v4,lineHeight:1.5}}>💡 {currentCtx}</div>}
-          {/* Progress bar */}
-          <div style={{background:P.b1,borderRadius:99,height:3,overflow:"hidden",marginTop:10}}>
-            <div style={{width:`${(answered/total)*100}%`,height:"100%",
-              background:`linear-gradient(90deg,${P.v1},${P.v3})`,borderRadius:99}}/>
-          </div>
+          <div style={{fontSize:isMobile?12:13,fontWeight:700,color:P.white,lineHeight:1.4}}>{currentQ}</div>
+          {currentCtx&&<div style={{fontSize:9.5,color:P.v4,marginTop:4,lineHeight:1.4}}>💡 {currentCtx}</div>}
         </div>
 
-        {/* Webcam — smaller on mobile */}
-        <div style={{position:"relative",background:"#000",overflow:"hidden",
-          height:isMobile?180:260,flexShrink:0}}>
-          <video ref={videoRef} muted playsInline style={{width:"100%",height:"100%",objectFit:"cover",
-            filter:isRec?"none":"brightness(0.12) saturate(0.2)",transition:"filter .6s ease"}}/>
+        {/* WEBCAM — Square on mobile (1:1), fills remaining space on tablet */}
+        <div style={{
+          position:"relative",
+          background:"#000",
+          overflow:"hidden",
+          ...(isMobile
+            ? {flexShrink:0, width:"100%", aspectRatio:"1/1"}
+            : {flex:1, width:"100%", minHeight:0}
+          )
+        }}>
+          {/* Recording border glow */}
+          {isRec&&<div style={{position:"absolute",inset:0,zIndex:3,pointerEvents:"none",
+            boxShadow:`inset 0 0 0 3px ${P.red}80`,borderRadius:0,
+            animation:"recglow 1.5s ease-in-out infinite"}}/>}
+
+          <video ref={videoRef} muted playsInline style={{
+            width:"100%",height:"100%",
+            objectFit:"cover",
+            display:"block",
+            filter:isRec?"none":"brightness(0.1) saturate(0)",
+            transition:"filter .6s ease"}}/>
           <canvas ref={canvasRef} style={{display:"none"}}/>
+
+          {/* Idle state — camera placeholder */}
           {!isRec&&!isProc&&<div style={{position:"absolute",inset:0,display:"flex",
-            flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
-            <div style={{fontSize:30}}>📹</div>
-            <span style={{fontSize:10,color:P.muted}}>Camera activates on record</span>
+            flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,
+            background:"linear-gradient(180deg,#07070d,#0c0c16)"}}>
+            <div style={{width:60,height:60,borderRadius:"50%",background:P.vglow,
+              border:`2px solid ${P.v2}40`,display:"flex",alignItems:"center",
+              justifyContent:"center",fontSize:26}}>📹</div>
+            <span style={{fontSize:11,color:P.muted,textAlign:"center",lineHeight:1.6}}>
+              Camera activates<br/>when you start recording
+            </span>
           </div>}
-          {isRec&&<div style={{position:"absolute",top:8,left:8,display:"flex",alignItems:"center",
-            gap:6,background:"rgba(7,7,13,0.85)",borderRadius:99,padding:"4px 10px"}}>
-            <span style={{width:6,height:6,borderRadius:"50%",background:P.red,animation:"pip 1s infinite"}}/>
-            <span style={{fontSize:11,fontWeight:700,color:P.white,fontFamily:"'DM Mono',monospace"}}>{fmt(recTime)}</span>
+
+          {/* Recording timer badge */}
+          {isRec&&<div style={{position:"absolute",top:12,left:12,zIndex:4,
+            display:"flex",alignItems:"center",gap:6,
+            background:"rgba(7,7,13,0.88)",backdropFilter:"blur(8px)",
+            borderRadius:99,padding:"5px 12px",border:`1px solid ${P.red}50`}}>
+            <span style={{width:7,height:7,borderRadius:"50%",background:P.red,
+              display:"inline-block",animation:"pip 1s ease-in-out infinite"}}/>
+            <span style={{fontSize:13,fontWeight:800,color:"#fff",fontFamily:"'DM Mono',monospace"}}>{fmt(recTime)}</span>
           </div>}
-          {isProc&&<div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",
-            alignItems:"center",justifyContent:"center",gap:10,background:"rgba(7,7,13,0.92)"}}>
-            <svg width="36" height="36" viewBox="0 0 44 44" style={{animation:"spin 1.2s linear infinite"}}>
+
+          {/* Face emotion overlay — bottom left */}
+          {liveEmo&&isRec&&liveEmo.face_detected&&<div style={{
+            position:"absolute",bottom:12,left:12,zIndex:4,
+            background:"rgba(7,7,13,0.88)",backdropFilter:"blur(8px)",
+            border:`1px solid ${P.v2}50`,borderRadius:12,
+            padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:22}}>{emojiEmo(ss(liveEmo.dominant_emotion))}</span>
+            <div>
+              <div style={{fontSize:11,color:P.v4,fontWeight:700,textTransform:"capitalize"}}>
+                {ss(liveEmo.dominant_emotion)}
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:2}}>
+                {[["C",rnd(liveEmo.confidence_score),P.v4],["E",rnd(liveEmo.eye_contact_score),P.green]].map(([l,v,c])=>(
+                  <div key={l} style={{display:"flex",alignItems:"center",gap:3}}>
+                    <span style={{fontSize:8,color:P.muted}}>{l}</span>
+                    <span style={{fontSize:10,color:c,fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>}
+
+          {/* Processing overlay */}
+          {isProc&&<div style={{position:"absolute",inset:0,zIndex:4,display:"flex",
+            flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,
+            background:"rgba(7,7,13,0.94)",backdropFilter:"blur(4px)"}}>
+            <svg width="52" height="52" viewBox="0 0 44 44" style={{animation:"spin 1.2s linear infinite"}}>
               <circle cx="22" cy="22" r="18" fill="none" stroke={P.b2} strokeWidth="3"/>
-              <circle cx="22" cy="22" r="18" fill="none" stroke={P.v3} strokeWidth="3" strokeDasharray="60 54" strokeLinecap="round"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke={P.v3} strokeWidth="3"
+                strokeDasharray="60 54" strokeLinecap="round"/>
             </svg>
-            <span style={{fontSize:11,color:P.v4,fontFamily:"'DM Mono',monospace"}}>{loadStep}</span>
-          </div>}
-          {liveEmo&&isRec&&liveEmo.face_detected&&<div style={{position:"absolute",bottom:8,right:8,
-            background:"rgba(7,7,13,0.85)",borderRadius:9,padding:"6px 10px",textAlign:"center"}}>
-            <div style={{fontSize:18}}>{emojiEmo(ss(liveEmo.dominant_emotion))}</div>
-            <div style={{fontSize:8,color:P.v4,textTransform:"capitalize"}}>{ss(liveEmo.dominant_emotion)}</div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:14,fontWeight:700,color:P.white,marginBottom:5}}>Analysing…</div>
+              <div style={{fontSize:12,color:P.v4,fontFamily:"'DM Mono',monospace"}}>{loadStep}</div>
+            </div>
           </div>}
         </div>
 
-        {/* Waveform */}
-        <div style={{flexShrink:0,borderTop:`1px solid ${isRec?P.v2+"60":P.b1}`}}>
-          <Waveform analyser={analyser} active={isRec} height={56}/>
+        {/* Waveform — compact */}
+        <div style={{flexShrink:0,borderTop:`1px solid ${isRec?P.v2+"80":P.b1}`,
+          background:isRec?P.vglow:"transparent",transition:"all .4s"}}>
+          <Waveform analyser={analyser} active={isRec} height={isMobile?52:64}/>
         </div>
 
         {/* Controls */}
-        <div style={{padding:"12px 14px",background:P.s1+"f0",borderTop:`1px solid ${P.b1}`,
-          display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",flexShrink:0}}>
+        <div style={{padding:"10px 14px",background:P.s1+"f8",borderTop:`1px solid ${P.b1}`,
+          display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
           {status!=="recording"
             ?<button onClick={startRec} disabled={isProc} style={{
               flex:1,background:isProc?"transparent":`linear-gradient(135deg,${P.v1},${P.v2})`,
               border:isProc?`1px solid ${P.b2}`:"none",color:isProc?P.muted:"#fff",
-              borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,cursor:isProc?"not-allowed":"pointer",
-              display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontFamily:"inherit"}}>
-              <span style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,0.8)"}}/>
-              Start Recording
+              borderRadius:11,padding:"13px",fontSize:14,fontWeight:700,cursor:isProc?"not-allowed":"pointer",
+              display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontFamily:"inherit",
+              boxShadow:isProc?"none":`0 4px 20px ${P.v2}55`}}>
+              {isProc
+                ? <><span style={{animation:"spin 1s linear infinite",display:"inline-block",fontSize:16}}>⟳</span> {loadStep||"Processing…"}</>
+                : <><span style={{width:9,height:9,borderRadius:"50%",background:"rgba(255,255,255,0.95)",display:"inline-block"}}/> Start Recording</>
+              }
             </button>
-            :<button onClick={stopRec} style={{flex:1,background:P.red+"18",border:`1px solid ${P.red}60`,
-              color:P.red,borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",
-              display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontFamily:"inherit"}}>
-              <span style={{width:8,height:8,borderRadius:2,background:P.red}}/>
+            :<button onClick={stopRec} style={{flex:1,background:P.red+"18",border:`2px solid ${P.red}70`,
+              color:P.red,borderRadius:11,padding:"13px",fontSize:14,fontWeight:700,cursor:"pointer",
+              display:"flex",alignItems:"center",justifyContent:"center",gap:8,fontFamily:"inherit",
+              boxShadow:`0 4px 16px ${P.red}30`}}>
+              <span style={{width:9,height:9,borderRadius:2,background:P.red,display:"inline-block"}}/>
               Stop — {fmt(recTime)}
             </button>}
           {blob&&!isRec&&!isProc&&<>
-            <button onClick={()=>analyze()} style={{flex:1,background:P.vglow,border:`1px solid ${P.v2}60`,
-              color:P.v4,borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-              ⚡ Analyse
+            <button onClick={()=>{analyze();}} style={{
+              flex:1,background:`linear-gradient(135deg,${P.v1},${P.v2})`,border:"none",
+              color:"#fff",borderRadius:11,padding:"13px",fontSize:14,fontWeight:700,
+              cursor:"pointer",fontFamily:"inherit",boxShadow:`0 4px 20px ${P.v2}55`,
+              display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              ⚡ Analyse Answer
             </button>
             <button onClick={()=>{setStatus("idle");setBlob(null);setErr("");setRecTime(0);setLoad("");}}
               style={{background:"transparent",border:`1px solid ${P.b2}`,color:P.muted,
-              borderRadius:10,padding:"12px 14px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
+              borderRadius:11,padding:"13px 16px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
               ↺
             </button>
           </>}
-          {err&&<div style={{width:"100%",fontSize:10.5,color:P.red,background:P.red+"12",
-            borderRadius:7,padding:"7px 10px"}}>⚠ {err}</div>}
+          {err&&<div style={{width:"100%",fontSize:11,color:P.red,background:P.red+"12",
+            borderRadius:8,padding:"9px 12px",marginTop:4}}>⚠ {err}</div>}
         </div>
 
-        {/* View results shortcut if available */}
-        {latestResult&&isDone&&<div style={{padding:"8px 14px",background:P.vglow,borderTop:`1px solid ${P.v2}30}`,flexShrink:0}}>
-          <button onClick={()=>setMobileTab("results")} style={{width:"100%",background:"transparent",
-            border:`1px solid ${P.v2}50`,color:P.v4,borderRadius:9,padding:"9px",fontSize:11,
-            fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-            📊 View Last Analysis →
+        {/* Green CTA when results ready */}
+        {isDone&&latestResult&&<div style={{padding:"8px 14px",
+          background:`linear-gradient(90deg,${P.green}12,${P.green}08)`,
+          borderTop:`1px solid ${P.green}30`,flexShrink:0}}>
+          <button onClick={()=>setMobileTab("results")} style={{width:"100%",
+            background:`linear-gradient(135deg,${P.green}25,${P.green}15)`,
+            border:`1px solid ${P.green}50`,color:P.green,borderRadius:10,padding:"11px",
+            fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+            display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            📊 View Analysis Results →
           </button>
         </div>}
       </div>}
@@ -1769,6 +1845,7 @@ export default function App(){
         /* ─── MOBILE / TABLET: tabbed single-column ─── */
         ? <MobileInterviewLayout
             isMobile={isMobile}
+            status={status}
             isRec={isRec} isProc={isProc} isDone={isDone}
             answered={answered} total={total} qNumber={qNumber}
             currentQ={currentQ} currentCtx={currentCtx}
@@ -1995,6 +2072,7 @@ export default function App(){
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes pip{0%,100%{opacity:1}50%{opacity:.3}}
+        @keyframes recglow{0%,100%{opacity:0.5}50%{opacity:1}}
         *{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:${P.bg}}
         ::-webkit-scrollbar-thumb{background:${P.b2};border-radius:3px}
