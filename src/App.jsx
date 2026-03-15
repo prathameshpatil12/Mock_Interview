@@ -64,6 +64,71 @@ function useBreakpoint(){
   return bp;
 }
 
+/* ════════════ MOCKAI LOGO SVG ════════════════════════════════════════ */
+function MockAILogo({size=32}){
+  const s=size;
+  return(
+    <svg width={s} height={s} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{flexShrink:0,display:"block"}}>
+      {/* Outer glow ring */}
+      <circle cx="20" cy="20" r="19" fill="url(#bg)" stroke="url(#ring)" strokeWidth="1"/>
+      {/* Brain circuit paths */}
+      <path d="M12 20 C12 14 16 11 20 11 C24 11 28 14 28 20 C28 26 24 29 20 29 C16 29 12 26 12 20Z"
+        fill="none" stroke="url(#grad1)" strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Left lobe */}
+      <path d="M20 11 C18 8 13 8 12 12 C11 15 13 17 15 17"
+        fill="none" stroke="url(#grad1)" strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Right lobe */}
+      <path d="M20 11 C22 8 27 8 28 12 C29 15 27 17 25 17"
+        fill="none" stroke="url(#grad2)" strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Bottom connector */}
+      <path d="M15 24 C15 27 17 29 20 29 C23 29 25 27 25 24"
+        fill="none" stroke="url(#grad2)" strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Circuit dots — nodes */}
+      <circle cx="20" cy="11" r="1.8" fill="#a78bfa"/>
+      <circle cx="12" cy="20" r="1.5" fill="#7c3aed"/>
+      <circle cx="28" cy="20" r="1.5" fill="#7c3aed"/>
+      <circle cx="15" cy="17" r="1.3" fill="#8b5cf6"/>
+      <circle cx="25" cy="17" r="1.3" fill="#8b5cf6"/>
+      <circle cx="20" cy="29" r="1.8" fill="#a78bfa"/>
+      {/* Center AI spark */}
+      <circle cx="20" cy="20" r="3" fill="url(#spark)"/>
+      <circle cx="20" cy="20" r="1.5" fill="white" opacity="0.9"/>
+      {/* Horizontal circuit lines */}
+      <line x1="13.5" y1="20" x2="17" y2="20" stroke="#5b21b6" strokeWidth="0.8" strokeLinecap="round"/>
+      <line x1="23" y1="20" x2="26.5" y2="20" stroke="#5b21b6" strokeWidth="0.8" strokeLinecap="round"/>
+      {/* Vertical circuit lines */}
+      <line x1="20" y1="12.8" x2="20" y2="17" stroke="#5b21b6" strokeWidth="0.8" strokeLinecap="round"/>
+      <line x1="20" y1="23" x2="20" y2="27.2" stroke="#5b21b6" strokeWidth="0.8" strokeLinecap="round"/>
+      {/* Diagonal accents */}
+      <line x1="14.5" y1="14.5" x2="17.5" y2="17.5" stroke="#7c3aed" strokeWidth="0.7" strokeLinecap="round" opacity="0.7"/>
+      <line x1="25.5" y1="14.5" x2="22.5" y2="17.5" stroke="#7c3aed" strokeWidth="0.7" strokeLinecap="round" opacity="0.7"/>
+      <defs>
+        <radialGradient id="bg" cx="50%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#1e1432"/>
+          <stop offset="100%" stopColor="#0c0c16"/>
+        </radialGradient>
+        <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.8"/>
+          <stop offset="100%" stopColor="#5b21b6" stopOpacity="0.3"/>
+        </linearGradient>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#a78bfa"/>
+          <stop offset="100%" stopColor="#7c3aed"/>
+        </linearGradient>
+        <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#8b5cf6"/>
+          <stop offset="100%" stopColor="#a78bfa"/>
+        </linearGradient>
+        <radialGradient id="spark" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#c4b5fd"/>
+          <stop offset="100%" stopColor="#7c3aed"/>
+        </radialGradient>
+      </defs>
+    </svg>
+  );
+}
+
 /* ════════════ PRIMITIVE UI COMPONENTS ═══════════════════════════════ */
 function Tag({children,color=P.v4}){
   return <span style={{fontSize:9,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",
@@ -202,9 +267,9 @@ function SetupScreen({onStart,backend}){
       <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:820}}>
         {/* Header */}
         <div style={{textAlign:"center",marginBottom:32}}>
-          <div style={{display:"inline-flex",alignItems:"center",gap:8,background:P.v2+"18",
-            border:`1px solid ${P.v2}40`,borderRadius:99,padding:"6px 16px",marginBottom:16}}>
-            <span style={{fontSize:13}}>🤖</span>
+          <div style={{display:"inline-flex",alignItems:"center",gap:10,background:P.v2+"18",
+            border:`1px solid ${P.v2}40`,borderRadius:99,padding:"8px 20px",marginBottom:20}}>
+            <MockAILogo size={22}/>
             <span style={{fontSize:10,color:P.v4,fontWeight:700,letterSpacing:2,textTransform:"uppercase",fontFamily:"'DM Mono',monospace"}}>AI-Powered Interview</span>
           </div>
           <div style={{fontSize:34,fontWeight:900,color:P.white,letterSpacing:-1.5,lineHeight:1.1,marginBottom:8}}>
@@ -951,8 +1016,7 @@ function FinalReport({agentReport,combinedResults,role,difficulty,onRestart}){
         padding:`0 ${isMobile?12:24}px`,display:"flex",alignItems:"center",justifyContent:"space-between",
         height:isMobile?48:54,backdropFilter:"blur(12px)",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:30,height:30,borderRadius:9,background:`linear-gradient(135deg,${P.v1},${P.v2})`,
-            display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>🎯</div>
+          <MockAILogo size={isMobile?28:32}/>
           <div>
             <div style={{fontSize:isMobile?12:15,fontWeight:800,color:P.white}}>Interview Complete</div>
             {!isMobile&&<div style={{fontSize:8,color:P.muted,letterSpacing:2,textTransform:"uppercase",fontFamily:"'DM Mono',monospace"}}>
@@ -1661,8 +1725,7 @@ export default function App(){
         borderBottom:`1px solid ${P.b1}`,padding:`0 ${isMobile?12:20}px`,display:"flex",
         alignItems:"center",justifyContent:"space-between",height:isMobile?48:52,backdropFilter:"blur(12px)"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:28,height:28,borderRadius:7,background:`linear-gradient(135deg,${P.v1},${P.v2})`,
-            display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>🎯</div>
+          <MockAILogo size={isMobile?26:30}/>
           <div>
             <div style={{fontSize:isMobile?12:14,fontWeight:800,color:P.white,letterSpacing:-0.3}}>
               MockAI{!isMobile&&<span style={{fontWeight:400,color:P.muted,fontSize:12}}> · {agentConfig.role}</span>}
